@@ -42,7 +42,24 @@ export const registerUser = async (req, res) => {
     });
     console.log("===========================");
 
-    res.status(201).json({ message: "User Registered successfully" });
+    // Generate token so frontend can treat this as an auto-login
+    const token = jwt.sign({ userID: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    // Return user data (without password) matching the login response shape
+    user.password = undefined;
+
+    res.status(201).json({
+      message: "User Registered successfully",
+      token,
+      user: {
+        _id: user._id,
+        fullname: user.fullname,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({ message: error.message || "Registration failed on server" });

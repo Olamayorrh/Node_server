@@ -31,7 +31,7 @@ export const analyzeImage = async (req, res) => {
     const prompt = `Analyze this industrial material/waste image for a marketplace listing. 
     Respond STRICTLY in valid JSON format with the following keys:
     - "title": A short, descriptive title (e.g. "500kg Recycled Glass").
-    - "category": Choose one of: "Plastic", "Metal", "Paper", "Electronic", "Other".
+    - "category": You MUST choose EXACTLY one of these values (no other values allowed): "Plastic", "Metal", "Paper", "Glass", "Electronic", "Rubber", "Wood", "Textile", "Chemical", "Organic", "Other".
     - "grade": Choose one of: "Sorted/Clean", "Unsorted/Mixed", "Industrial Grade".
     - "description": A short functional description including any visible impurities, storage conditions, or visual defects.
     
@@ -131,5 +131,50 @@ export const uploadListing = async (req, res) => {
   } catch (error) {
     console.error("Upload Listing Error:", error);
     res.status(500).json({ success: false, message: "Failed to publish listing" });
+  }
+};
+export const getListings = async (req, res) => {
+  try {
+    const { search, category, location, minPrice, maxPrice, listingType, grade } = req.query;
+    let query = {};
+
+    // Keyword search: title or description
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), "i");
+      query.$or = [{ title: regex }, { description: regex }];
+    }
+
+    // Category filter (exact match, case-insensitive)
+    if (category && category !== "All") {
+      query.category = new RegExp(`^${category.trim()}$`, "i");
+    }
+
+    // Location text search on address field
+    if (location && location.trim()) {
+      query["location.address"] = new RegExp(location.trim(), "i");
+    }
+
+    // Price range filter
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    // Listing type filter (fixed / bidding)
+    if (listingType && listingType !== "All") {
+      query.listingType = listingType.toLowerCase();
+    }
+
+    // Grade filter
+    if (grade && grade !== "All") {
+      query.grade = new RegExp(`^${grade.trim()}$`, "i");
+    }
+
+    const listings = await Waste.find(query).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: listings });
+  } catch (error) {
+    console.error("Get Listings Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch listings" });
   }
 };

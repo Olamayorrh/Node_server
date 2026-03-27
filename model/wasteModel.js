@@ -8,7 +8,7 @@ const wasteSchema = new mongoose.Schema(
     },
     category: {
        type: String,
-       enum: ["Plastic", "Metal", "Paper", "Electronic", "Other", ""],
+       enum: ["Plastic", "Metal", "Paper", "Glass", "Electronic", "Rubber", "Wood", "Textile", "Chemical", "Organic", "Other", ""],
        default: "",
     },
     grade: {

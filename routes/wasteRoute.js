@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { analyzeImage, uploadListing } from "../controller/wasteController.js";
+import { analyzeImage, uploadListing, getListings } from "../controller/wasteController.js";
 
 const router = express.Router();
 
@@ -21,4 +21,8 @@ router.post("/analyze-image", upload.single("image"), analyzeImage);
 // POST endpoint for publishing a listing with up to 5 images
 router.post("/upload", upload.array("images", 5), uploadListing);
 
+// GET endpoint for fetching all listings (with optional ?search= query)
+router.get("/listings", getListings);
+
 export default router;
+
